@@ -1,8 +1,8 @@
-name: Update GitHub Stats
+name: Render GitHub Stats
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */12 * * *"
   workflow_dispatch:
 
 jobs:
@@ -11,16 +11,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Download stats
+      - name: Install deps
+        run: sudo apt-get install -y librsvg2-bin
+
+      - name: Download SVGs
         run: |
           curl -o stats.svg "https://github-readme-stats.vercel.app/api?username=NicoMartina&show_icons=true&theme=radical"
           curl -o langs.svg "https://github-readme-stats.vercel.app/api/top-langs?username=NicoMartina&layout=compact&theme=radical"
-          curl -o trophies.svg "https://github-profile-trophy.vercel.app/?username=NicoMartina&theme=algolia&no-bg=true&margin-w=15"
+          curl -o streak.svg "https://streak-stats.demolab.com?user=NicoMartina&theme=radical"
 
-      - name: Commit files
+      - name: Convert to PNG
+        run: |
+          rsvg-convert stats.svg -o stats.png
+          rsvg-convert langs.svg -o langs.png
+          rsvg-convert streak.svg -o streak.png
+
+      - name: Commit
         run: |
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub Bot"
-          git add .
-          git commit -m "update stats" || exit 0
+          git add *.png
+          git commit -m "update rendered stats" || exit 0
           git push
